@@ -54,3 +54,6 @@ class AccountsPage(BasePage):
 
     def open_transactions(self):
         self.click(self.TRANSACTIONS_TAB)
+
+    def click_deposit_Btn(self):
+        pass
