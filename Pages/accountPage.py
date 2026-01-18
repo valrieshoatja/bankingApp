@@ -1,59 +1,47 @@
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
-from Pages.basePage import BasePage
+from selenium.webdriver.support.ui import WebDriverWait, Select
+from selenium.webdriver.support import expected_conditions as EC
 
+class AccountsPage:
 
-class AccountsPage(BasePage):
+    def __init__(self, driver):
+        self.driver = driver
+        self.wait = WebDriverWait(driver, 15)  # 15-second wait for elements
 
-    ACCOUNT_SELECT = (By.ID, "accountSelect")
+        # Locators
+        self.account_dropdown = (By.ID, "accountSelect")  # use ID for stability
+        self.deposit_btn = (By.XPATH, "//button[@ng-click='deposit()']")
+        self.amount_input = (By.XPATH, "//input[@ng-model='amount']")
+        self.submit_deposit_btn = (By.XPATH, "//button[@type='submit']")
+        self.deposit_success_msg = (By.XPATH, "//span[@class='error ng-binding']")  # adjust if needed
+        self.balance_text = (By.XPATH, "//div[@class='center']/strong[2]")  # to get balance
 
-    DEPOSIT_TAB = (By.XPATH, "//button[@ng-click='deposit()']")
-    WITHDRAW_TAB = (By.XPATH, "//button[@ng-click='withdrawl()']")
-
-    AMOUNT_INPUT = (By.XPATH, "//input[@ng-model='amount']")
-    SUBMIT_BTN = (By.XPATH, "//button[@type='submit']")
-
-    SUCCESS_MSG = (By.XPATH, "//span[contains(text(),'Successful')]")
-
-    BALANCE_TEXT = (By.XPATH, "(//strong[@class='ng-binding'])[2]")
-
-    TRANSACTIONS_TAB = (By.XPATH, "//button[@ng-click='transactions()']")
-
+    # Select account by index (works for <select>)
     def select_account_by_index(self, index):
-        dropdown = self.wait.until(lambda d: d.find_element(*self.ACCOUNT_SELECT))
-        Select(dropdown).select_by_index(index)
+        # Wait until the dropdown is visible
+        self.wait.until(EC.visibility_of_element_located(self.account_dropdown))
+        select_element = Select(self.driver.find_element(*self.account_dropdown))
+        select_element.select_by_index(index)
 
-    def get_current_balance(self):
-        balance = self.get_text(self.BALANCE_TEXT)
-        return int(balance)
-
-    def click_deposit_tab(self):
-        self.click(self.DEPOSIT_TAB)
-
-    def click_withdraw_tab(self):
-        self.click(self.WITHDRAW_TAB)
-
-    def enter_amount(self, amount):
-        self.type(self.AMOUNT_INPUT, amount)
-
-    def click_submit(self):
-        self.click(self.SUBMIT_BTN)
-
-    def deposit_amount(self, amount):
-        self.click_deposit_tab()
-        self.enter_amount(amount)
-        self.click_submit()
-
-    def withdraw_amount(self, amount):
-        self.click_withdraw_tab()
-        self.enter_amount(amount)
-        self.click_submit()
-
-    def is_transaction_successful(self):
-        return "Successful" in self.get_text(self.SUCCESS_MSG)
-
-    def open_transactions(self):
-        self.click(self.TRANSACTIONS_TAB)
-
+    # Click deposit button
     def click_deposit_Btn(self):
-        pass
+        self.wait.until(EC.element_to_be_clickable(self.deposit_btn)).click()
+
+    # Enter deposit amount
+    def account_deposit(self, amount):
+        input_field = self.wait.until(EC.visibility_of_element_located(self.amount_input))
+        input_field.clear()
+        input_field.send_keys(str(amount))
+
+    # Click submit deposit button
+    def clickSubmitDepBtn(self):
+        self.wait.until(EC.element_to_be_clickable(self.submit_deposit_btn)).click()
+
+    # Get deposit success message
+    def get_deposit_message(self):
+        return self.wait.until(EC.visibility_of_element_located(self.deposit_success_msg)).text
+
+    # Get current account balance
+    def get_current_balance(self):
+        balance_elem = self.wait.until(EC.visibility_of_element_located(self.balance_text))
+        return float(balance_elem.text.strip())
